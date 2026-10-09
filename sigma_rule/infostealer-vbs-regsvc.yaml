@@ -1,0 +1,39 @@
+title: Infostealer VBScript Spawning RegAsm or RegSvcs Process Injection
+id: 71b88b3f-4108-449d-b080-10aef75c775b
+status: experimental
+description: Detects VBScript execution via wscript.exe/cscript.exe spawning .NET utilities like RegAsm.exe or RegSvcs.exe. This pattern is commonly observed in malware campaigns (e.g., AgentTesla, FormBook, Lokibot) using VBS droppers to inject banking infostealers into legitimate binaries.
+author: SEC-saff
+date: 2026/10/09
+references:
+    - https://attack.mitre.org/techniques/T1059/005/
+    - https://attack.mitre.org/techniques/T1218/009/
+    - https://attack.mitre.org/techniques/T1055/
+tags:
+    - attack.execution
+    - attack.t1059.005
+    - attack.defense_evasion
+    - attack.t1218.009
+    - attack.t1055
+logsource:
+    category: process_creation
+    product: windows
+detection:    # Selection 1: Script host executing a VBScript file
+
+    selection_parent:
+        ParentImage|endswith:
+            - '\wscript.exe'
+            - '\cscript.exe'
+        ParentCommandLine|contains:
+            - '.vbs'
+            - '.vbe'
+
+    # Selection 2: Spawning RegSvcs or RegAsm (frequently hollowed by .NET loaders)
+    selection_child:
+        Image|endswith:
+            - '\RegSvcs.exe'
+            - '\RegAsm.exe'
+
+    condition: selection_parent and selection_child
+falsepositives:
+    - Custom administrative deployment scripts (rarely use VBS to register .NET components)
+level: high 
