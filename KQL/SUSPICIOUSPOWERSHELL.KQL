@@ -1,0 +1,9 @@
+
+
+
+DeviceProcessEvents
+| where Timestamp > ago(24h)
+| where ProcessCommandLine has_any ("powershell.exe", "pwsh.exe")
+//detect suspicious powershell command
+| where ProcessCommandLine has_any ("-enc", "-encodedcommand", "nop", "bypass", "hidden")
+| project Timestamp, DeviceName, AccountName, ProcessCommandLine, InitiatingProcessFileName
