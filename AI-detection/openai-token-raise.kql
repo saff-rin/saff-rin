@@ -1,0 +1,15 @@
+let lookback = 7d;
+let evalHour = bin(now() - 1h, 1h);
+
+OpenAIChatCompletions
+| where TimeGenerated >= ago(lookback)
+| extend ActorUser = tostring(AdditionalFields.input_user)
+| extend TotalTokens = todouble(InputTokensUsed) + todouble(OutputTokensUsed)
+| summarize HourTokens = sum(TotalTokens) by ModelName, ActorUser, Hour = bin(TimeGenerated, 1h)
+| summarize 
+    AvgHourlyTokens = avgif(HourTokens, Hour < evalHour),
+    CurrentTokens = sumif(HourTokens, Hour == evalHour)
+    by ModelName, ActorUser
+| where CurrentTokens > 50000 
+    and CurrentTokens >= AvgHourlyTokens * 3
+| project ModelName, ActorUser, CurrentTokens, AvgHourlyTokens
