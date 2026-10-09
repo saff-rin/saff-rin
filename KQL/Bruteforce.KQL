@@ -1,0 +1,8 @@
+SigninLogs
+| where TimeGenerated > ago(1h)
+| summarize 
+    FailedCount = countif(ResultType != 0), 
+    SuccessCount = countif(ResultType == 0) 
+    by UserPrincipalName, IPAddress
+| where FailedCount >= 5 and SuccessCount >= 1
+| project UserPrincipalName, IPAddress, FailedCount, SuccessCount
